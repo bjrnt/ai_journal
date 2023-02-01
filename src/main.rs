@@ -10,7 +10,7 @@ mod commands;
 mod dialogue;
 mod open_ai;
 
-fn username_allowlist_filter(allowlist: &Vec<String>, msg: Message) -> bool {
+fn username_allowlist_filter(allowlist: &[String], msg: Message) -> bool {
     msg.from()
         .and_then(|user| user.username.as_ref())
         .map(|username| allowlist.contains(username))
@@ -31,11 +31,11 @@ async fn main() {
 
     let username_allowlist: Vec<String> = std::env::var("USERNAME_ALLOWLIST")
         .expect("USERNAME_ALLOWLIST must be set")
-        .split(",")
+        .split(',')
         .map(|v| v.to_owned())
         .collect();
     assert!(
-        username_allowlist.len() > 0,
+        !username_allowlist.is_empty(),
         "USERNAME_ALLOWLIST must contain at least one username"
     );
 

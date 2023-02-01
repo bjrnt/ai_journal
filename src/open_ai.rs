@@ -49,7 +49,7 @@ impl OpenAiApi {
         self.complete(BASE_PROMPT).await
     }
 
-    pub async fn complete_next(&self, msgs: &Vec<JournalMessage>) -> Response {
+    pub async fn complete_next(&self, msgs: &[JournalMessage]) -> Response {
         let prompt = convert_to_prompt_format(msgs);
         self.complete(&prompt).await
     }
@@ -98,14 +98,14 @@ impl OpenAiApi {
     }
 }
 
-fn convert_to_prompt_format(msgs: &Vec<JournalMessage>) -> String {
+fn convert_to_prompt_format(msgs: &[JournalMessage]) -> String {
     let mut prompt = String::new();
     prompt.push_str(BASE_PROMPT.trim_end_matches("You: "));
     for msg in msgs.iter() {
         let speaker = if msg.from_bot { "You: " } else { "Me: " };
         prompt.push_str(speaker);
         prompt.push_str(&msg.text);
-        prompt.push_str("\n");
+        prompt.push('\n');
     }
     prompt.push_str("You:");
     prompt

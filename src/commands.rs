@@ -59,7 +59,7 @@ async fn export_handler(bot: Bot, msg: Message, state: State) -> HandlerResult {
     Ok(())
 }
 
-fn messages_to_export_format(msgs: &Vec<JournalMessage>) -> String {
+fn messages_to_export_format(msgs: &[JournalMessage]) -> String {
     let mut exported = String::new();
     for msg in msgs.iter() {
         let prefix = if msg.from_bot { "Socrates: " } else { "Me: " };
