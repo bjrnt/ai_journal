@@ -3,7 +3,7 @@ use teloxide::{dispatching::dialogue::InMemStorage, prelude::*};
 
 use crate::{
     common_types::{HandlerResult, JournalMessage},
-    open_ai,
+    open_ai::OpenAiApi,
 };
 
 pub type BotDialogue = Dialogue<State, InMemStorage<State>>;
@@ -17,8 +17,13 @@ pub enum State {
     },
 }
 
-pub async fn start(bot: Bot, dialogue: BotDialogue, msg: Message) -> HandlerResult {
-    let message = open_ai::begin().await?;
+pub async fn start(
+    bot: Bot,
+    dialogue: BotDialogue,
+    open_ai_api: &OpenAiApi,
+    msg: Message,
+) -> HandlerResult {
+    let message = open_ai_api.begin().await?;
     info!("Starting chat: '{}'", message.text);
 
     bot.send_message(msg.chat.id, message.text.clone()).await?;
@@ -34,6 +39,7 @@ pub async fn chatting(
     bot: Bot,
     dialogue: BotDialogue,
     messages: Vec<JournalMessage>,
+    open_ai_api: &OpenAiApi,
     msg: Message,
 ) -> HandlerResult {
     let mut next_messages = messages.clone();
@@ -53,7 +59,7 @@ pub async fn chatting(
         timestamp: msg.date,
     });
 
-    let next_message = open_ai::complete_next(&next_messages).await?;
+    let next_message = open_ai_api.complete_next(&next_messages).await?;
     next_messages.push(next_message.clone());
 
     info!(

@@ -4,7 +4,7 @@ use teloxide::{dispatching::dialogue::InMemStorage, prelude::*};
 
 mod common_types;
 
-use crate::dialogue::State;
+use crate::{dialogue::State, open_ai::OpenAiApi};
 
 mod commands;
 mod dialogue;
@@ -25,12 +25,15 @@ async fn main() {
 
     let telegram_api_token =
         std::env::var("TELEGRAM_API_TOKEN").expect("TELEGRAM_API_TOKEN must be set");
+
+    let open_ai_api_token =
+        std::env::var("OPEN_AI_API_TOKEN").expect("OPEN_AI_API_TOKEN must be set");
+
     let username_allowlist: Vec<String> = std::env::var("USERNAME_ALLOWLIST")
         .expect("USERNAME_ALLOWLIST must be set")
         .split(",")
         .map(|v| v.to_owned())
         .collect();
-
     assert!(
         username_allowlist.len() > 0,
         "USERNAME_ALLOWLIST must contain at least one username"
@@ -56,7 +59,10 @@ async fn main() {
                     ),
             ),
     )
-    .dependencies(dptree::deps![InMemStorage::<State>::new()])
+    .dependencies(dptree::deps![
+        OpenAiApi::new(open_ai_api_token),
+        InMemStorage::<State>::new()
+    ])
     .default_handler(|upd| async move {
         warn!("Unhandled update: {:?}", upd);
     })
