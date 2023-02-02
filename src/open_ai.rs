@@ -36,6 +36,7 @@ struct Choice {
     text: String,
 }
 
+#[derive(Clone)]
 pub struct OpenAiApi {
     api_token: String,
 }
@@ -45,16 +46,16 @@ impl OpenAiApi {
         OpenAiApi { api_token }
     }
 
-    pub async fn begin(&self) -> Response {
+    pub async fn begin(self) -> Response {
         self.complete(BASE_PROMPT).await
     }
 
-    pub async fn complete_next(&self, msgs: &[JournalMessage]) -> Response {
+    pub async fn complete_next(self, msgs: &[JournalMessage]) -> Response {
         let prompt = convert_to_prompt_format(msgs);
         self.complete(&prompt).await
     }
 
-    async fn complete(&self, prompt: &str) -> Response {
+    async fn complete(self, prompt: &str) -> Response {
         let data = serde_json::json!({
             "model": "text-davinci-003",
             "prompt": prompt,

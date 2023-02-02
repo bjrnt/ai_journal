@@ -33,7 +33,7 @@ pub async fn handler(bot: Bot, msg: Message, dialogue: BotDialogue, cmd: Command
         }
         Command::End => {
             dialogue.reset().await?;
-            bot.send_message(msg.chat.id, "Our conversation has ended. Thanks for taking the time to talk to me today! Type /start to begin a new conversation at a later time.").await?;
+            bot.send_message(msg.chat.id, "Our conversation has ended. Thank you for taking the time to talk with me today! Type /start to begin a new conversation at a later time.").await?;
         }
     };
     Ok(())

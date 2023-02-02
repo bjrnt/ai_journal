@@ -20,7 +20,7 @@ pub enum State {
 pub async fn start(
     bot: Bot,
     dialogue: BotDialogue,
-    open_ai_api: &OpenAiApi,
+    open_ai_api: OpenAiApi,
     msg: Message,
 ) -> HandlerResult {
     let message = open_ai_api.begin().await?;
@@ -39,7 +39,7 @@ pub async fn chatting(
     bot: Bot,
     dialogue: BotDialogue,
     messages: Vec<JournalMessage>,
-    open_ai_api: &OpenAiApi,
+    open_ai_api: OpenAiApi,
     msg: Message,
 ) -> HandlerResult {
     let mut next_messages = messages.clone();
