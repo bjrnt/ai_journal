@@ -1,3 +1,4 @@
+use regex::Regex;
 use teloxide::{prelude::*, types::InputFile, utils::command::BotCommands};
 
 use crate::{
@@ -60,6 +61,10 @@ async fn export_handler(bot: Bot, msg: Message, state: State) -> HandlerResult {
 }
 
 fn messages_to_export_format(msgs: &[JournalMessage]) -> String {
+    lazy_static! {
+        static ref NEWLINE_COLLAPSING_RE: Regex = Regex::new("\n{3,}").unwrap();
+    }
+
     let mut exported = String::new();
     for msg in msgs.iter() {
         let prefix = if msg.from_bot { "Socrates: " } else { "Me: " };
@@ -67,5 +72,32 @@ fn messages_to_export_format(msgs: &[JournalMessage]) -> String {
         exported.push_str(msg.text.as_str());
         exported.push_str("\n\n");
     }
-    exported
+    NEWLINE_COLLAPSING_RE
+        .replace(exported.trim_start().trim_end(), "\n\n")
+        .into()
+}
+
+#[cfg(test)]
+mod tests {
+    use chrono::Utc;
+
+    use super::*;
+
+    #[test]
+    fn export_collapses_newlines() {
+        let out = messages_to_export_format(&[
+            JournalMessage {
+                from_bot: true,
+                text: "Hello\n\n\n\n\n".into(),
+                timestamp: Utc::now(),
+            },
+            JournalMessage {
+                from_bot: false,
+                text: "What's up?\n".into(),
+                timestamp: Utc::now(),
+            },
+        ]);
+        let expected = "Socrates: Hello\n\nMe: What's up?";
+        assert_eq!(out, expected)
+    }
 }

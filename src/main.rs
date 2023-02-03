@@ -2,6 +2,9 @@ use dotenv::dotenv;
 use log::warn;
 use teloxide::{dispatching::dialogue::InMemStorage, prelude::*};
 
+#[macro_use]
+extern crate lazy_static;
+
 mod common_types;
 
 use crate::{dialogue::State, open_ai::OpenAiApi};

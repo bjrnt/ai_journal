@@ -55,7 +55,7 @@ pub async fn chatting(
     );
     next_messages.push(JournalMessage {
         from_bot: false,
-        text: user_text.to_owned(),
+        text: user_text.trim_start().trim_end().to_owned(),
         timestamp: msg.date,
     });
 

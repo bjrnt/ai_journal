@@ -88,8 +88,10 @@ impl OpenAiApi {
 
         let text = message
             .text
+            .trim_start()
             .trim_end_matches("You: ")
-            .trim_end_matches("Me: ");
+            .trim_end_matches("Me: ")
+            .trim_end();
 
         Ok(JournalMessage {
             from_bot: true,
