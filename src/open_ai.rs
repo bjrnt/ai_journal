@@ -1,4 +1,6 @@
-use chrono::Utc;
+use std::borrow::Cow;
+use tiktoken_rs::tiktoken::{p50k_base, CoreBPE};
+
 use log::info;
 use serde::{Deserialize, Serialize};
 
@@ -6,6 +8,7 @@ use crate::common_types::JournalMessage;
 
 type Response = Result<JournalMessage, Box<dyn std::error::Error + Send + Sync>>;
 
+const MAX_PROMPT_TOKENS: usize = 2048;
 const BASE_PROMPT: &str = "You are Socrates. Please help me with an issue in my life. Please ask me questions to try to understand what my issue is and help me unpack it. You can start the conversation however you feel best.\nYou:";
 
 #[derive(Debug, Serialize)]
@@ -50,12 +53,30 @@ impl OpenAiApi {
         self.complete(BASE_PROMPT).await
     }
 
-    pub async fn complete_next(self, msgs: &[JournalMessage]) -> Response {
-        let prompt = convert_to_prompt_format(msgs);
+    pub async fn complete_next(&self, msgs: &[JournalMessage]) -> Response {
+        let prompt = self.prompt(msgs)?;
         self.complete(&prompt).await
     }
 
-    async fn complete(self, prompt: &str) -> Response {
+    fn prompt(
+        &self,
+        msgs: &[JournalMessage],
+    ) -> Result<Cow<'static, str>, Box<dyn std::error::Error + Send + Sync>> {
+        lazy_static! {
+            static ref BPE: CoreBPE = p50k_base().unwrap();
+        }
+
+        for skip_n_messages in (0..msgs.len()).step_by(5) {
+            let prompt = convert_to_prompt_format(&msgs[skip_n_messages..]);
+            if BPE.encode_with_special_tokens(&prompt).len() > MAX_PROMPT_TOKENS {
+                continue;
+            }
+            return Ok(prompt);
+        }
+        Err("could not find a prompt with valid length under max tokens".into()).into()
+    }
+
+    async fn complete(&self, prompt: &str) -> Response {
         let data = serde_json::json!({
             "model": "text-davinci-003",
             "prompt": prompt,
@@ -93,27 +114,40 @@ impl OpenAiApi {
             .trim_end_matches("Me: ")
             .trim_end();
 
-        Ok(JournalMessage {
-            from_bot: true,
-            text: text.to_owned(),
-            timestamp: Utc::now(),
-        })
+        Ok(JournalMessage::new(text.into(), true))
     }
 }
 
-fn convert_to_prompt_format(msgs: &[JournalMessage]) -> String {
-    let mut prompt = String::new();
-    prompt.push_str(BASE_PROMPT.trim_end_matches("You: "));
-    for msg in msgs.iter() {
-        let speaker = if msg.from_bot { "You: " } else { "Me: " };
-        prompt.push_str(speaker);
-        prompt.push_str(&msg.text);
-        prompt.push('\n');
-    }
-    prompt.push_str("You:");
-    prompt
+fn convert_to_prompt_format(msgs: &[JournalMessage]) -> Cow<'static, str> {
+    let prompt = BASE_PROMPT.trim_end_matches("You:");
+    let messages: String = msgs
+        .iter()
+        .map(|msg| {
+            format!(
+                "{}: {}\n",
+                if msg.from_bot { "You" } else { "Me" },
+                msg.text
+            )
+        })
+        .collect();
+    format!("{}{}You:", prompt, messages).into()
 }
 
 fn approximate_cost(num_tokens: u32) -> f32 {
     num_tokens as f32 * 0.00002
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn generates_correct_prompt() {
+        let out = convert_to_prompt_format(&[
+            JournalMessage::new("Hello".into(), true),
+            JournalMessage::new("What's up?".into(), false),
+        ]);
+        assert!(out.starts_with(BASE_PROMPT));
+        assert!(out.ends_with("You: Hello\nMe: What's up?\nYou:"));
+    }
 }
