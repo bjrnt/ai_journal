@@ -1,14 +1,16 @@
 use log::*;
-use teloxide::{dispatching::dialogue::InMemStorage, prelude::*};
+use serde::{Deserialize, Serialize};
+use teloxide::{dispatching::dialogue::ErasedStorage, prelude::*};
 
 use crate::{
     common_types::{HandlerResult, JournalMessage},
     open_ai::OpenAiApi,
 };
 
-pub type BotDialogue = Dialogue<State, InMemStorage<State>>;
+pub type BotDialogue = Dialogue<State, ErasedStorage<State>>;
+pub type DialogueStorage = std::sync::Arc<ErasedStorage<State>>;
 
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Default, Debug, Serialize, Deserialize)]
 pub enum State {
     #[default]
     Start,

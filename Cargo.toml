@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-teloxide = { version = "0.12", features = ["macros"] }
+teloxide = { version = "0.12", features = ["macros", "sqlite-storage"] }
 log = "0.4"
 pretty_env_logger = "0.4"
 tokio = { version = "1.8", features = ["full", "rt-multi-thread", "macros"] }
@@ -14,7 +14,7 @@ reqwest = { version = "0.11", features = ["json"] }
 serde_json = { version = "1.0" }
 serde = { version = "1.0", features = ["derive"] }
 dotenv = "0.15.0"
-chrono = "0.4.23"
+chrono = { version = "0.4.23", features = ["serde"] }
 lazy_static = "1.4.0"
 regex = "1.7.1"
 tiktoken-rs = "0.1.2"

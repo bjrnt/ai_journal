@@ -8,6 +8,7 @@ AI journal is a Telegram bot that can be used for AI-assisted journaling on the 
     - `TELEGRAM_API_TOKEN` can be generated using the [Telegram tutorial](https://core.telegram.org/bots/tutorial#getting-ready)
     - `OPEN_AI_API_TOKEN` can be retrieved by [creating an API key](https://platform.openai.com/account/api-keys)
     - `USERNAME_ALLOWLIST` is a comma-separated list of Telegram usernames that have access to the bot. Keep the bot restricted to ensure your Open AI API costs don't explode.
+    - `DB_PATH` is a path to the SQLite database that will be used to store dialogues.
 
 ```
 cp ./.env.example ./.env

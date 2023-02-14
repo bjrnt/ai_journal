@@ -1,6 +1,10 @@
+use dialogue::DialogueStorage;
 use dotenv::dotenv;
 use log::warn;
-use teloxide::{dispatching::dialogue::InMemStorage, prelude::*};
+use teloxide::{
+    dispatching::dialogue::{serializer::Json, ErasedStorage, SqliteStorage, Storage},
+    prelude::*,
+};
 
 #[macro_use]
 extern crate lazy_static;
@@ -42,13 +46,17 @@ async fn main() {
         "USERNAME_ALLOWLIST must contain at least one username"
     );
 
+    let db_path = std::env::var("DB_PATH").expect("DB_PATH must be set");
+
+    let storage: DialogueStorage = SqliteStorage::open(&db_path, Json).await.unwrap().erase();
+
     let bot = Bot::new(telegram_api_token);
 
     Dispatcher::builder(
         bot,
         Update::filter_message()
             .filter(move |msg: Message| username_allowlist_filter(&username_allowlist, msg))
-            .enter_dialogue::<Message, InMemStorage<dialogue::State>, dialogue::State>()
+            .enter_dialogue::<Message, ErasedStorage<dialogue::State>, dialogue::State>()
             .branch(
                 dptree::entry()
                     .filter_command::<commands::Command>()
@@ -62,10 +70,7 @@ async fn main() {
                     ),
             ),
     )
-    .dependencies(dptree::deps![
-        OpenAiApi::new(open_ai_api_token),
-        InMemStorage::<State>::new()
-    ])
+    .dependencies(dptree::deps![OpenAiApi::new(open_ai_api_token), storage])
     .default_handler(|upd| async move {
         warn!("Unhandled update: {:?}", upd);
     })
